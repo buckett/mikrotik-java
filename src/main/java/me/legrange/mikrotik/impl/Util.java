@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
@@ -20,14 +21,14 @@ final class Util {
     /**
      * write a command to the output stream
      */
-    static void write(Command cmd, OutputStream out) throws UnsupportedEncodingException, IOException {
-        encode(cmd.getCommand(), out);
+    static void write(Command cmd, Charset cs, OutputStream out) throws UnsupportedEncodingException, IOException {
+        encode(cmd.getCommand(),  cs, out);
         for (Parameter param : cmd.getParameters()) {
-            encode(String.format("=%s=%s", param.getName(), param.hasValue() ? param.getValue() : ""), out);
+            encode(String.format("=%s=%s", param.getName(), param.hasValue() ? param.getValue() : ""), cs, out);
         }
         String tag = cmd.getTag();
         if ((tag != null) && !tag.equals("")) {
-            encode(String.format(".tag=%s", tag), out);
+            encode(String.format(".tag=%s", tag), cs, out);
         }
         List<String> props = cmd.getProperties();
         if (!props.isEmpty()) {
@@ -38,10 +39,10 @@ final class Util {
                 }
                 buf.append(props.get(i));
             }
-            encode(buf.toString(), out);
+            encode(buf.toString(), cs, out);
         }
         for (String query : cmd.getQueries()) {
-            encode(query, out);
+            encode(query, cs, out);
         }
         out.write(0);
     }
@@ -50,16 +51,16 @@ final class Util {
      * decode bytes from an input stream of Mikrotik protocol sentences into
      * text
      */
-    static String decode(InputStream in) throws ApiDataException, ApiConnectionException {
+    static String decode(InputStream in, Charset cs) throws ApiDataException, ApiConnectionException {
         StringBuilder res = new StringBuilder();
-        decode(in, res);
+        decode(in, cs, res);
         return res.toString();
     }
 
     /**
      * decode bytes from an input stream into Mikrotik protocol sentences
      */
-    private static void decode(InputStream in, StringBuilder result) throws ApiDataException, ApiConnectionException {
+    private static void decode(InputStream in, Charset cs, StringBuilder result) throws ApiDataException, ApiConnectionException {
         try {
             int len = readLen(in);
             if (len > 0) {
@@ -71,12 +72,12 @@ final class Util {
                     }
                     buf[i] = (byte) (c & 0xFF);
                 }
-                String res = new String(buf);
+                String res = new String(buf, cs);
                 if (result.length() > 0) {
                     result.append("\n");
                 }
                 result.append(res);
-                decode(in, result);
+                decode(in, cs, result);
             }
         } catch (IOException ex) {
             throw new ApiConnectionException(ex.getMessage(), ex);
@@ -132,8 +133,8 @@ final class Util {
      * encode text using Mikrotik's encoding scheme and write it to an output
      * stream.
      */
-    private static void encode(String word, OutputStream out) throws UnsupportedEncodingException, IOException {
-        byte bytes[] = word.getBytes("UTF-8");
+    private static void encode(String word, Charset cs, OutputStream out) throws UnsupportedEncodingException, IOException {
+        byte bytes[] = new String(word.getBytes(cs)).getBytes("UTF-8");
         int len = bytes.length;
         if (len < 0x80) {
             out.write(len);

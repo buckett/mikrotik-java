@@ -1,6 +1,6 @@
 package examples;
 
-import java.util.List;
+import java.nio.charset.Charset;
 import java.util.Map;
 import me.legrange.mikrotik.MikrotikApiException;
 
@@ -23,8 +23,9 @@ public class CharacterSets extends Example {
     }
 
     private void test() throws MikrotikApiException {
-        con.execute("/ip/hotspot/user/add name=userJ comment='" + JAPANESE + "'");
-        con.execute("/ip/hotspot/user/add name=userC comment='" + CRYLLIC + "'");
+       con.setCharset(Charset.forName("iso-8859-6"));
+      //  con.execute("/ip/hotspot/user/add name=userJ comment='" + JAPANESE + "'");
+      //  con.execute("/ip/hotspot/user/add name=userC comment='" + CRYLLIC + "'");
         con.execute("/ip/hotspot/user/add name=userA comment='" + ARABIC + "'");
 
         for (Map<String, String> res : con.execute("/ip/hotspot/user/print return name,comment")) {

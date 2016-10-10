@@ -1,5 +1,6 @@
 package me.legrange.mikrotik;
 
+import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
 import javax.net.SocketFactory;
@@ -117,6 +118,8 @@ public abstract class ApiConnection implements AutoCloseable {
      * @since 2.1
      */
     public abstract void setTimeout(int timeout) throws MikrotikApiException;
+    
+    public abstract void setCharset(Charset cs);
 
     /**
      * Disconnect from the remote API

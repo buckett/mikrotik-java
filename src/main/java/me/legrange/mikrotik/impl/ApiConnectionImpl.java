@@ -8,6 +8,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -88,6 +89,13 @@ public final class ApiConnectionImpl extends ApiConnection {
     }
 
     @Override
+    public void setCharset(Charset cs) {
+        this.cs = cs;
+    }
+    
+    
+
+    @Override
     public void close() throws ApiConnectionException {
         if (!connected) {
             throw new ApiConnectionException(("Not/no longer connected to remote Mikrotik"));
@@ -115,7 +123,7 @@ public final class ApiConnectionImpl extends ApiConnection {
         cmd.setTag(tag);
         listeners.put(tag, lis);
         try {
-            Util.write(cmd, out);
+            Util.write(cmd, cs, out);
         } catch (UnsupportedEncodingException ex) {
             throw new ApiDataException(ex.getMessage(), ex);
         } catch (IOException ex) {
@@ -168,6 +176,7 @@ public final class ApiConnectionImpl extends ApiConnection {
     private final Map<String, ResultListener> listeners;
     private Integer _tag = 0;
     private int timeout = ApiConnection.DEFAULT_COMMAND_TIMEOUT;
+    private Charset cs = Charset.forName("UTF-8");
 
     /**
      * thread to read data from the socket and process it into Strings
@@ -197,7 +206,7 @@ public final class ApiConnectionImpl extends ApiConnection {
         public void run() {
             while (connected) {
                 try {
-                    String s = Util.decode(in);
+                    String s = Util.decode(in,cs);
                     if (s != null) {
                         put(s);
                     }
